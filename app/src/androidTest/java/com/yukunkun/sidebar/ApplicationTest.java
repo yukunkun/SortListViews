@@ -1,4 +1,4 @@
-package com.allenliu.sidebar;
+package com.yukunkun.sidebar;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

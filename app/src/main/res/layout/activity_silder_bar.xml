@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:sidebar="http://schemas.android.com/apk/res-auto"
+    tools:context="com.yukunkun.SilderBarActivity">
+    <LinearLayout android:layout_width="wrap_content"
+                  android:layout_height="wrap_content">
+        <Button android:layout_width="wrap_content"
+                android:onClick="wave"
+                android:text="wave"
+                android:layout_height="wrap_content"/>
+        <Button android:layout_width="wrap_content"
+                android:text="nowave"
+                android:onClick="nowave"
+                android:layout_height="wrap_content"/>
+        <Button android:layout_width="wrap_content"
+                android:text="normal"
+                android:onClick="normal"
+                android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <com.yukunkun.SideBar
+        android:textColor="@color/colorAccent"
+        android:textSize="15sp"
+        android:paddingRight="10dp"
+        sidebar:scaleTime="1"
+        android:layout_width="200dp"
+        android:id="@+id/bar"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
+    <TextView android:layout_width="55dp"
+              android:text="A"
+              android:id="@+id/tv"
+              android:gravity="center"
+              android:textSize="25sp"
+              android:visibility="gone"
+              android:textColor="#bb4e79f1"
+              android:background="@color/green"
+              android:layout_centerInParent="true"
+              android:layout_height="55dp"/>
+</RelativeLayout>

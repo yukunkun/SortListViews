@@ -1,4 +1,4 @@
-package com.allenliu.sidebar;
+package com.yukunkun;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -7,9 +7,10 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.widget.TextView;
+
+import com.yukunkun.sidebar.R;
 
 /**
  * Created by Allen Liu on 2016/5/12.
@@ -25,6 +26,10 @@ public class SideBar extends TextView {
     private int itemH;
     private int w;
     private int h;
+    public static int STYLEWAVE=0;
+    public static int STYLENOWAVE=1;
+    public static int STYLENORMAL=2;
+    private int style=0;
     /**
      * 普通情况下字体大小
      */
@@ -92,6 +97,14 @@ public class SideBar extends TextView {
         invalidate();
     }
 
+    /**
+     * 设置样式
+     * @param style
+     */
+    public void setStyle(int style){
+        this.style=style;
+    }
+
     private void init(AttributeSet attrs) {
       //  setPadding(dp(10), 0, dp(10), 0);
         if(attrs!=null) {
@@ -117,11 +130,14 @@ public class SideBar extends TextView {
         return DensityUtil.dip2px(getContext(), px);
     }
 
+    //获取到y的范围
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_MOVE:
+
+                //保证在文字上才获取y
                 if(event.getX()>(w-getPaddingRight()-singleTextH-10)) {
                     eventY = event.getY();
                     invalidate();
@@ -132,10 +148,21 @@ public class SideBar extends TextView {
                     break;
                 }
             case MotionEvent.ACTION_CANCEL:
+                //只有normal才会回调
+                if(style==2){
+                    //离开的回调
+                    callBack.onSelectEnd();
+                }
                 eventY = 0;
                 invalidate();
                 return true;
             case MotionEvent.ACTION_UP:
+                //只有normal才会回调
+                if(style==2){
+                    //离开的回调
+                    callBack.onSelectEnd();
+                }
+                //滑动离开文字
                 if(event.getX()>(w-getPaddingRight()-singleTextH-10)) {
                     eventY = 0;
                     invalidate();
@@ -153,24 +180,41 @@ public class SideBar extends TextView {
         DrawView(eventY);
     }
 
+    //更具y来实现绘制，即点击在文字上
     private void DrawView(float y) {
         int currentSelectIndex = -1;
+        //有触摸才绘制大文字
         if (y != 0) {
             for (int i = 0; i < letters.length; i++) {
+                //当前的高度
                 float currentItemY = itemH * i;
+                //下一个的高度
                 float nextItemY = itemH * (i + 1);
+                //判断位置在点中的字母间
                 if (y >= currentItemY && y < nextItemY) {
+
                     currentSelectIndex = i;
                     if(callBack!=null){
                         callBack.onSelectStr(currentSelectIndex,letters[i]);
                     }
                     //画大的字母
                     Paint.FontMetrics fontMetrics = bigTextPaint.getFontMetrics();
+                    //文字绘制，有基线的区别，获取到文字的高度
                     float bigTextSize = fontMetrics.descent - fontMetrics.ascent;
-                    canvas.drawText(letters[i], w - getPaddingRight() - scaleWidth - bigTextSize, singleTextH + itemH * i, bigTextPaint);
+                    //判断类型
+                    if(style==0||style==1){
+                        //绘制字母，大文字
+                        canvas.drawText(letters[i], w - getPaddingRight() - scaleWidth - bigTextSize, singleTextH + itemH * i, bigTextPaint);
+                    }
+                    //２才会回调
+                    if(style==2){
+                        //选中的回调
+                        callBack.onSelectStart();
+                    }
                 }
             }
         }
+        //其他的绘制
         drawLetters(y, currentSelectIndex);
     }
 
@@ -179,9 +223,12 @@ public class SideBar extends TextView {
         if (index == -1) {
             w = getMeasuredWidth();
             h = getMeasuredHeight();
+            //每一个字母的高度
             itemH = h / letters.length;
             Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+            //文字绘制，有基线的区别，获取到文字的高度
             singleTextH = fontMetrics.descent - fontMetrics.ascent;
+            //绘制字母，每个item
             for (int i = 0; i < letters.length; i++) {
                 canvas.drawText(letters[i], w - getPaddingRight(), singleTextH + itemH * i, textPaint);
             }
@@ -196,19 +243,28 @@ public class SideBar extends TextView {
                     centerItemToDrawY = singleTextH + itemH * (index + scaleItemCount);
                 else
                     centerItemToDrawY = singleTextH + itemH * (index - scaleItemCount);
+                //最麻烦的计算,距离当前点中的字母的距离远，则比例越小，距离x越小 (delta在字母移动范围内为0－1)
                 float delta = 1 - Math.abs((y - currentItemToDrawY) / (centerItemToDrawY - currentItemToDrawY));
-                Log.v("delta", letters[i] + "--->" + delta + "");
+//                Log.i("size", letters[i] + "--->" + delta + "");
                 float maxRightX = w - getPaddingRight();
                 //如果大于0，表明在y坐标上方
                 scaleTextPaint.setTextSize(getTextSize() + getTextSize() * delta);
+//                Log.i("scaleTextPaint_size",getTextSize() + getTextSize() * delta+"");
                 float drawX = maxRightX - scaleWidth * delta;
                 //超出边界直接花在边界上
-                if (drawX > maxRightX)
+               if (style==0){//波浪形状
+                    if (drawX > maxRightX) {
+                        //画边上的字母
+                        canvas.drawText(letters[i], maxRightX, singleTextH + itemH * i, textPaint);
+                    }else {
+                        //画弧线字母
+                        canvas.drawText(letters[i], drawX, singleTextH + itemH * i, scaleTextPaint);
+                    }
+                    //没有波浪
+                }else {
                     canvas.drawText(letters[i], maxRightX, singleTextH + itemH * i, textPaint);
-                else
-                    canvas.drawText(letters[i], drawX, singleTextH + itemH * i, scaleTextPaint);
-
-//抛物线实现，没有动画效果，太生硬了
+                }
+                //抛物线实现，没有动画效果，太生硬了
 //                    canvas.save();
 //                    canvas.translate(w-getPaddingRight(),0);
 //                    double y1 = singleTextH + itemH * (index - scaleItemCount);
@@ -221,7 +277,7 @@ public class SideBar extends TextView {
 //                        canvas.drawText(letters[i], (float) (p * (currentY - y1) * (currentY - y2)), singleTextH + itemH * i, scaleTextPaint);
 //                    }
 //                    canvas.restore();
-                //     }
+//                     }
             }
         }
     }

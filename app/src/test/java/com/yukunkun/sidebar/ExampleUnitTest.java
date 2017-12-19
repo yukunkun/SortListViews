@@ -1,4 +1,4 @@
-package com.allenliu.sidebar;
+package com.yukunkun.sidebar;
 
 import org.junit.Test;
 
